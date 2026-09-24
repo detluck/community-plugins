@@ -4,6 +4,7 @@ local Razer = require("./razer_dbus.luau")
 local lastAppliedColor = ""
 local lastDpiMap: { [string]: number } = {}
 local lastBrightnessMap: { [string]: number } = {}
+local lowBatteryWarned: { [string]: boolean } = {}
 
 function update()
   noctalia.setUpdateInterval(1000)
