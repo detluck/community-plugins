@@ -11,11 +11,14 @@ Monitor and control Razer peripherals including DPI sensitivity, LED brightness,
 
 ## Requirements
 
-Install `openrazer-daemon` and ensure the OpenRazer driver is loaded:
+Install `openrazer-daemon`, `busctl`, and `systemctl` on `PATH`:
 
-- **Arch Linux**: `sudo pacman -S openrazer-daemon`
-- Add your user to the `openrazer` group: `sudo gpasswd -a $USER openrazer` (or `plugdev` on Debian/Ubuntu)
-- Enable and start the user service: `systemctl --user enable --now openrazer-daemon`
+- `openrazer-daemon` — runs the OpenRazer background hardware service providing the D-Bus interface (`org.razer`).
+  - **Arch Linux**: `sudo pacman -S openrazer-daemon openrazer-driver-dkms python-openrazer`
+  - Add your user to the `openrazer` group: `sudo gpasswd -a $USER openrazer` (or `plugdev` on Debian/Ubuntu)
+  - Enable and start the user service: `systemctl --user enable --now openrazer-daemon`
+- `busctl` — sends method calls to `openrazer-daemon` over the session D-Bus to query and configure device properties (part of `systemd` or `dbus-broker`).
+- `systemctl` — invoked by the "Start Daemon" fallback button in the panel to start the `openrazer-daemon.service` user unit on systemd hosts.
 
 ## Usage
 
@@ -53,7 +56,8 @@ noctalia msg plugin detluck/razer:monitor all refresh
 
 ## Notes
 
-- **Communication**: Communicates entirely locally over the D-Bus session bus with `org.razer` (`openrazer-daemon`). No network requests are made.
+- **Processes and D-Bus IPC**: All hardware communication queries and sets device state locally via `busctl` calls to `org.razer` over the user session D-Bus. No network requests are made.
+- **Daemon Management**: The "Start Daemon" button in the panel executes `systemctl --user start openrazer-daemon`. On non-systemd systems, start `openrazer-daemon` manually or via your system's service manager.
 - **Hardware Support**: Any Razer device supported by OpenRazer (120+ models including DeathAdder, Viper, Basilisk, Naga, BlackWidow, Huntsman, Kraken, Firefly).
 - **Multiple Devices**: Displays stacked controls in a scrollable panel (`ui.scroll`) when multiple mice, keyboards, or headsets are connected simultaneously.
 - **Hardware DPI Sync**: Detects hardware DPI changes (e.g. from physical mouse DPI buttons) in real-time.

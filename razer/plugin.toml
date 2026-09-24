@@ -7,7 +7,7 @@ license      = "MIT"
 icon         = "mouse-2"
 description  = "Razer device monitor, battery level indicator, and lighting controller via OpenRazer."
 tags         = ["hardware", "gaming", "theming", "system", "bar", "panel", "service"]
-dependencies = ["openrazer-daemon"]
+dependencies = ["openrazer-daemon", "busctl", "systemctl"]
 
 [[setting]]
 key             = "sync_theme_color"
