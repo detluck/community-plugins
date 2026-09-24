@@ -317,13 +317,17 @@ function update()
           noctalia.state.set("razer_devices", devices)
           lastRenderedSignature = ""
           update()
-          local primaryHex = Razer.getThemeColor()
+          local primaryHex, found = Razer.getThemeColor()
           local cleanHex = primaryHex:gsub("#", "")
           local r = tonumber(cleanHex:sub(1, 2), 16) or 0
           local g = tonumber(cleanHex:sub(3, 4), 16) or 255
           local b = tonumber(cleanHex:sub(5, 6), 16) or 0
           Razer.setStatic(dev.serial, r, g, b)
-          noctalia.notify("Razer Lighting", "Synced with theme: #" .. cleanHex)
+          if found then
+            noctalia.notify("Razer Lighting", "Synced with theme: #" .. cleanHex)
+          else
+            noctalia.notify("Razer Lighting", "Theme accent unavailable, defaulted to Razer Green")
+          end
         end
       }),
       ui.button({

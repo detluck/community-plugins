@@ -194,29 +194,32 @@ local BUILTIN_PALETTES: { [string]: string } = {
   ["rose pine"] = "#EBBCBA",
 }
 
--- Get active theme accent color directly from Noctalia settings
-function Razer.getThemeColor(): string
-  -- Inspect Noctalia settings (~/.local/state/noctalia/settings.toml)
-  local settingsToml = noctalia.readFile(noctalia.expandPath("~/.local/state/noctalia/settings.toml"))
-  if settingsToml then
-    local builtinName = settingsToml:match('builtin%s*=%s*"([^"]+)"')
-    if builtinName then
-      local mapped = BUILTIN_PALETTES[builtinName:lower()]
-      if mapped then return mapped end
+-- Get active theme accent color directly via Noctalia host API
+function Razer.getThemeColor(): (string, boolean)
+  -- 1. Check built-in palette setting via host API
+  local builtin = noctalia.getSetting("theme.builtin")
+  if type(builtin) == "string" and builtin ~= "" then
+    local mapped = BUILTIN_PALETTES[builtin:lower()]
+    if mapped then
+      return mapped, true
     end
+  end
 
-    local paletteName = settingsToml:match('palette%s*=%s*"([^"]+)"')
-    if paletteName then
-      local cat = noctalia.readFile(noctalia.expandPath("~/.local/state/noctalia/community-palettes/.catalog/palettes.json"))
-      if cat then
-        local pJson = noctalia.json.decode(cat)
-        if type(pJson) == "table" then
-          for _, item in ipairs(pJson) do
-            if item.name and item.name:lower() == paletteName:lower() then
-              local prim = (item.dark and item.dark.primary) or (item.light and item.light.primary)
-              if prim and type(prim) == "string" and #prim >= 7 then
-                return prim:upper()
-              end
+  -- 2. Check community palette setting via host API
+  local palette = noctalia.getSetting("theme.palette")
+  if type(palette) == "string" and palette ~= "" then
+    local cat = noctalia.readFile(noctalia.expandPath("~/.local/state/noctalia/community-palettes/.catalog/palettes.json"))
+    if cat then
+      local pJson = noctalia.json.decode(cat)
+      if type(pJson) == "table" then
+        for _, item in ipairs(pJson) do
+          if item.name and item.name:lower() == palette:lower() then
+            local dark = noctalia.isDarkMode()
+            local prim = (dark and item.dark and item.dark.primary)
+              or (item.light and item.light.primary)
+              or (item.dark and item.dark.primary)
+            if prim and type(prim) == "string" and #prim >= 7 then
+              return prim:upper(), true
             end
           end
         end
@@ -224,8 +227,8 @@ function Razer.getThemeColor(): string
     end
   end
 
-  -- Default to signature Razer Green
-  return "#00FF00"
+  -- 3. Fallback to Razer Green when theme accent is unavailable
+  return "#00FF00", false
 end
 
 return Razer

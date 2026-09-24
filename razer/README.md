@@ -58,6 +58,7 @@ noctalia msg plugin detluck/razer:monitor all refresh
 
 - **Processes and D-Bus IPC**: All hardware communication queries and sets device state locally via `busctl` calls to `org.razer` over the user session D-Bus. No network requests are made.
 - **Daemon Management**: The "Start Daemon" button in the panel executes `systemctl --user start openrazer-daemon`. On non-systemd systems, start `openrazer-daemon` manually or via your system's service manager.
+- **Theme Synchronization**: Queries active palette configuration via Noctalia's host API (`noctalia.getSetting`). When a community palette is selected, resolves the primary accent from the catalog file at `~/.local/state/noctalia/community-palettes/.catalog/palettes.json`. Defaults to Razer Green (`#00FF00`) if an accent color is unavailable.
 - **Hardware Support**: Any Razer device supported by OpenRazer (120+ models including DeathAdder, Viper, Basilisk, Naga, BlackWidow, Huntsman, Kraken, Firefly).
 - **Multiple Devices**: Displays stacked controls in a scrollable panel (`ui.scroll`) when multiple mice, keyboards, or headsets are connected simultaneously.
 - **Hardware DPI Sync**: Detects hardware DPI changes (e.g. from physical mouse DPI buttons) in real-time.
