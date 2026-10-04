@@ -1,9 +1,5 @@
 {
   "settings": {
-    "sync_theme_color": {
-      "label": "Sync RGB with Theme",
-      "description": "Automatically match Razer LED colors to Noctalia's active accent color"
-    },
     "low_battery_threshold": {
       "label": "Low Battery Warning (%)",
       "description": "Battery percentage threshold to trigger warning notification"
@@ -28,6 +24,9 @@
     "brightness": "LED Brightness",
     "lighting_effect": "Lighting Effect",
     "theme_sync": "Theme Sync",
+    "theme_role": "Palette Role",
+    "theme_synced": "Theme role set to: ",
+    "theme_fallback": "Theme color unavailable, defaulted to Razer Green",
     "razer_green": "Razer Green",
     "spectrum": "Spectrum",
     "off": "Off",

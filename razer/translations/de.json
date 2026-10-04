@@ -1,9 +1,5 @@
 {
   "settings": {
-    "sync_theme_color": {
-      "label": "RGB mit Theme synchronisieren",
-      "description": "Razer-LED-Farben automatisch an Noctalias aktive Akzentfarbe anpassen"
-    },
     "low_battery_threshold": {
       "label": "Warnschwelle für niedrigen Akkustand (%)",
       "description": "Akkustand in Prozent, ab dem eine Warnbenachrichtigung gesendet wird"
@@ -28,6 +24,9 @@
     "brightness": "LED-Helligkeit",
     "lighting_effect": "Beleuchtungseffekt",
     "theme_sync": "Theme-Sync",
+    "theme_role": "Farbrolle",
+    "theme_synced": "Theme-Rolle gesetzt auf: ",
+    "theme_fallback": "Theme-Farbe nicht verfügbar, Standard Razer-Grün verwendet",
     "razer_green": "Razer-Grün",
     "spectrum": "Spektrum",
     "off": "Aus",
