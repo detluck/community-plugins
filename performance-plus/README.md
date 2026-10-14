@@ -1,48 +1,42 @@
-# Performance Plus for Noctalia
+# Performance Plus
 
-A high-performance gaming, rendering, and immersion plugin for the [Noctalia](https://github.com/noctalia-dev/noctalia) desktop shell.
+High-performance gaming, rendering, and immersion profile suite for Noctalia. Dynamically disables heavy compositor effects, unmaps wallpapers, suspends desktop widgets, enables Do Not Disturb, and sets system power profiles.
 
-## Features
+## Plugin
 
-### 1. Compositor Visual Effects (Universal Support)
-Dynamically disables heavy compositor effects during gameplay/rendering and restores them when toggled off:
-- **Hyprland:** Disables blur, shadows, and animations (supports both modern Hyprland Lua configurations via `hyprctl eval` and legacy `.conf` setups).
-- **Niri:** Hot-swaps configuration via `niri msg action load-config-file` to turn off animations (`animations { off }`) and client background blur.
-- **Umbriel:** Suppresses active shaders (`umbriel msg effect-screen-set:off`) and hot-swaps blur rules.
-- **Sway / SwayFX:** Disables blur, shadows, corner radius, and dimming via `swaymsg`.
-- **KWin:** Unloads compositor effects (`blur`, `slide`, `scale`, `fade`, `translucency`, `sheet`) via DBus.
-- **Mango:** Hot-swaps configuration via `mmsg dispatch load_config_file` to turn off blur, animations, and shadows, then restores default config.
-- **Labwc:** Triggers reconfigure without disrupting windows.
+| Field | Value |
+| --- | --- |
+| ID | `detluck/performance-plus` |
+| Entries | Bar widget: `indicator`; shortcut: `shortcut`; service: `service` |
 
-### 2. Desktop Shell Optimizations
-- **Unmap Wallpapers:** Destroys layer-shell background surfaces completely to release GPU textures and VRAM.
-- **Hide Desktop Widgets:** Tears down desktop widget instances to stop CPU/GPU ticking.
-- **Do Not Disturb (DND):** Silences incoming notification toasts.
-- **Dismiss Active Notifications:** Clears any currently floating notification popups immediately upon entering performance mode.
-- **UPower Performance Governor:** Sets system power profile to `performance` (and restores to `balanced`).
-- **Hide Status Bar & Dock:** Optionally unmaps Noctalia's top/bottom bars and dock for full screen immersion.
-- **Disable OSD Popups:** Suppresses volume and brightness OSD overlays to prevent game frame drops and focus loss.
-- **Pause Media:** Pauses active MPRIS audio/video playback when engaged.
+## Requirements
 
-### 3. Custom Shell Hooks
-- **Shell Hooks:** Execute custom commands or shell scripts on enter (`hook_on_enter`) and exit (`hook_on_exit`).
+No external daemons required. Visual effect toggling integrates with your active Wayland compositor:
 
----
+- **Hyprland**: `hyprctl` (supports both modern Hyprland Lua setups and legacy configurations).
+- **Niri**: `niri` on `PATH`.
+- **Mango**: `mmsg` on `PATH`.
+- **Sway / SwayFX**: `swaymsg` on `PATH`.
+- **KWin**: `qdbus6`, `qdbus`, or `busctl` on `PATH`.
+- **Umbriel**: `umbriel` on `PATH`.
 
 ## Usage
 
-### 1. Control Center
-Open Noctalia's Control Center and click the **Performance Plus** quick tile (rocket icon).
+### Control Center Shortcut
 
-### 2. Status Bar Widget
-Add the `detluck/performance-plus:indicator` widget to your Noctalia bar. Left-clicking toggles Performance Plus.
+Add the quick tile in **Settings → Control Center → Shortcuts** (`detluck/performance-plus:shortcut`). Clicking the tile toggles Performance Plus on or off.
 
-### 3. Keybindings & IPC
-Bind a key combination in your compositor config:
+### Status Bar Widget
 
-#### Hyprland (`hyprland.conf` or `hyprland.lua`)
-```ini
-bind = $mainMod, F12, exec, noctalia msg plugin "detluck/performance-plus:service" all toggle
+Add the indicator widget (`detluck/performance-plus:indicator`) in **Settings → Bar → Widgets** or under your bar definition in `settings.toml`. Left-clicking toggles Performance Plus.
+
+### Keybinding
+
+Bind a keyboard shortcut in your compositor configuration:
+
+#### Hyprland (`hyprland.lua`)
+```lua
+hl.bind("SUPER + F12", hl.dsp.exec_cmd("noctalia msg plugin 'detluck/performance-plus:service' all toggle"))
 ```
 
 #### Niri (`config.kdl`)
@@ -52,32 +46,53 @@ binds {
 }
 ```
 
-#### Sway / Umbriel
+#### Sway / Mango / Generic
 ```bash
 noctalia msg plugin "detluck/performance-plus:service" all toggle
 ```
 
----
+## Settings
 
-## Configuration
+Configure individual features in **Settings → Plugins → Performance Plus**:
 
-All features can be individually toggled in **Settings → Plugins → Performance Plus**:
-- `disable_wallpaper` (default: `true`)
-- `disable_blur` (default: `true`)
-- `disable_animations` (default: `true`)
-- `hide_widgets` (default: `true`)
-- `enable_dnd` (default: `true`)
-- `clear_notifications` (default: `true`)
-- `set_power_profile` (default: `true`)
-- `disable_osd` (default: `true`)
-- `hide_bar` (default: `false`)
-- `hide_dock` (default: `false`)
-- `pause_media` (default: `false`)
-- `hook_on_enter` (default: `""`)
-- `hook_on_exit` (default: `""`)
+| Setting | Type | Default | Description |
+| --- | --- | --- | --- |
+| `disable_wallpaper` | `bool` | `true` | Tear down background layer-shell surfaces to free GPU VRAM memory. |
+| `disable_blur` | `bool` | `true` | Turn off compositor background blur. |
+| `disable_animations` | `bool` | `true` | Turn off window and shell transition animations. |
+| `hide_widgets` | `bool` | `true` | Pause and hide all active desktop widgets. |
+| `enable_dnd` | `bool` | `true` | Silence all notification toasts while active. |
+| `clear_notifications` | `bool` | `true` | Clear any currently visible notification toasts immediately upon activation. |
+| `set_power_profile` | `bool` | `true` | Set CPU and system governor to Performance mode via UPower. |
+| `hide_bar` | `bool` | `false` | Hide Noctalia status bar for full screen immersion. |
+| `hide_dock` | `bool` | `false` | Hide Noctalia application dock while performance mode is active. |
+| `disable_osd` | `bool` | `true` | Suppress volume and brightness popups to avoid game frame drops. |
+| `pause_media` | `bool` | `false` | Pause active MPRIS media players when entering performance mode. |
+| `hook_on_enter` | `string` | `""` | Custom shell command or script executed when performance mode is enabled. |
+| `hook_on_exit` | `string` | `""` | Custom shell command or script executed when performance mode is disabled. |
 
----
+## IPC
 
-## License
+Dispatch events directly to the background service:
 
-MIT License.
+```sh
+# Toggle performance mode on/off
+noctalia msg plugin "detluck/performance-plus:service" all toggle
+
+# Explicitly enable performance mode
+noctalia msg plugin "detluck/performance-plus:service" all enable
+
+# Explicitly disable performance mode
+noctalia msg plugin "detluck/performance-plus:service" all disable
+```
+
+## Notes
+
+- **Compositor Adaptation**:
+  - **Hyprland**: Evaluates `hl.config()` via `hyprctl eval` (with fallback to `hyprctl keyword`) to safely disable blur, shadows, and animations without breaking Lua configuration parsers.
+  - **Niri**: Generates an overlay configuration and hot-loads it via `niri msg action load-config-file`. Base config is restored upon exit.
+  - **Mango**: Generates an overlay configuration sourcing `~/.config/mango/config.conf` and hot-swaps it via `mmsg dispatch load_config_file`. Default config is restored upon exit.
+  - **Sway / SwayFX**: Disables blur, shadows, corner radius, and dimming via `swaymsg`. Config is reloaded on exit (`swaymsg reload`) to restore custom styles.
+  - **KWin**: Dynamically unloads/loads effects via D-Bus (`/Effects`) and triggers `/KWin reconfigure` to resynchronize settings.
+  - **Umbriel**: Replaces configuration via `umbriel config-replace` and resets active screen shaders.
+- **Clean Teardown**: Exiting or uninstalling the plugin while Performance Plus is active automatically disengages the mode and restores all system and compositor settings.
