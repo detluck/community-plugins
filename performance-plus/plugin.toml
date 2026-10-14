@@ -3,9 +3,11 @@ name = "Performance Plus"
 version = "0.2.0"
 plugin_api = 31
 author = "detluck"
+license = "MIT"
 icon = "rocket"
 description = "High-performance gaming and rendering profile suite for Noctalia."
-tags = ["performance", "gaming", "system"]
+dependencies = []
+tags = ["gaming", "system", "utility"]
 
 [[setting]]
 key = "disable_wallpaper"
