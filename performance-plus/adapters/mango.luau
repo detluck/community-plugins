@@ -11,7 +11,7 @@ local PERF_CONFIG_PATH = runtimeDir .. "/mango-perf.conf"
 local BASE_CONFIG_PATH = configDir .. "/mango/config.conf"
 
 function M.enable(opts)
-    if opts.animations == false and opts.blur == false then
+    if opts.animations == false and opts.blur == false and opts.shadows == false then
         return
     end
 

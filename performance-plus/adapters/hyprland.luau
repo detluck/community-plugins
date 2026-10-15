@@ -39,21 +39,45 @@ fi
 end
 
 function M.enable(opts)
-    local disableBlur = (opts.blur == true) and false or nil
-    local disableAnim = (opts.animations == true) and false or nil
-    local disableShadows = (opts.shadows == true) and false or nil
+    if opts.blur == false and opts.animations == false and opts.shadows == false then
+        return
+    end
 
-    apply(disableBlur, disableAnim, disableShadows)
-    noctalia.log("[Hyprland] Performance mode enabled (blur & animations disabled)")
+    local probeCmd = [[sh -c 'echo "{\"blur\":$(hyprctl -j getoption decoration:blur:enabled 2>/dev/null | grep -o "\"bool\": *[a-z]*" | cut -d: -f2),\"anim\":$(hyprctl -j getoption animations:enabled 2>/dev/null | grep -o "\"bool\": *[a-z]*" | cut -d: -f2),\"shadow\":$(hyprctl -j getoption decoration:shadow:enabled 2>/dev/null | grep -o "\"bool\": *[a-z]*" | cut -d: -f2)}"' ]]
+    noctalia.runAsync(probeCmd, function(result)
+        if noctalia.state.get("performance") ~= true then
+            return
+        end
+
+        local snap = { blur = true, anim = true, shadow = true }
+        if result and result.stdout and result.stdout ~= "" then
+            local decoded = noctalia.json.decode(result.stdout)
+            if decoded then
+                if decoded.blur ~= nil then snap.blur = decoded.blur end
+                if decoded.anim ~= nil then snap.anim = decoded.anim end
+                if decoded.shadow ~= nil then snap.shadow = decoded.shadow end
+            end
+        end
+        noctalia.state.set("hyprland_snapshot", snap)
+
+        local targetBlur = if opts.blur == true then false else nil
+        local targetAnim = if opts.animations == true then false else nil
+        local targetShadow = if opts.shadows == true then false else nil
+
+        apply(targetBlur, targetAnim, targetShadow)
+        noctalia.log("[Hyprland] Performance mode enabled (selected effects disabled)")
+    end)
 end
 
 function M.disable(opts)
-    local restoreBlur = (opts.blur == true) and true or nil
-    local restoreAnim = (opts.animations == true) and true or nil
-    local restoreShadows = (opts.shadows == true) and true or nil
+    local snap = noctalia.state.get("hyprland_snapshot")
+    local restoreBlur = if opts.blur == true then ((snap and snap.blur ~= nil) and snap.blur or true) else nil
+    local restoreAnim = if opts.animations == true then ((snap and snap.anim ~= nil) and snap.anim or true) else nil
+    local restoreShadow = if opts.shadows == true then ((snap and snap.shadow ~= nil) and snap.shadow or true) else nil
 
-    apply(restoreBlur, restoreAnim, true)
-    noctalia.log("[Hyprland] Performance mode disabled (blur & animations restored)")
+    apply(restoreBlur, restoreAnim, restoreShadow)
+    noctalia.state.set("hyprland_snapshot", nil)
+    noctalia.log("[Hyprland] Performance mode disabled (restored recorded effects)")
 end
 
 return M

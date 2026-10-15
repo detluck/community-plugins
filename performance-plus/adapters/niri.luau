@@ -15,13 +15,19 @@ function M.enable(opts)
         return
     end
 
-    local kdl = string.format([[
-include "%s"
+    local parts = {
+        string.format('include "%s"', BASE_CONFIG_PATH)
+    }
 
+    if opts.animations ~= false then
+        table.insert(parts, [[
 animations {
     off
-}
+}]])
+    end
 
+    if opts.blur ~= false then
+        table.insert(parts, [[
 window-rule {
     background-effect {
         blur false
@@ -33,8 +39,21 @@ layer-rule {
     background-effect {
         blur false
     }
-}
-]], BASE_CONFIG_PATH)
+}]])
+    end
+
+    if opts.shadows ~= false then
+        table.insert(parts, [[
+shadow {
+    off
+}]])
+    end
+
+    if #parts == 1 then
+        return
+    end
+
+    local kdl = table.concat(parts, "\n\n") .. "\n"
 
     -- Write temp override securely and load it in Niri only if base config exists and write succeeds
     local cmd = string.format([[sh -c 'mkdir -p -m 0700 "%s" && if [ -f "%s" ]; then

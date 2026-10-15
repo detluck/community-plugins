@@ -11,14 +11,20 @@ local PERF_CONFIG_PATH = runtimeDir .. "/umbriel-perf.toml"
 local BASE_CONFIG_PATH = configDir .. "/umbriel/config.toml"
 
 function M.enable(opts)
+    if opts.blur == false and opts.animations == false and opts.shadows == false then
+        return
+    end
+
     if opts.blur ~= false then
         noctalia.runAsync({"umbriel", "msg", "effect-screen-set:off"})
     end
 
-    local toml = string.format([==[
-[include]
-files = ["%s"]
+    local parts = {
+        string.format('[include]\nfiles = ["%s"]', BASE_CONFIG_PATH)
+    }
 
+    if opts.blur ~= false then
+        table.insert(parts, [==[
 [appearance.blur]
 enabled = false
 
@@ -28,7 +34,21 @@ blur = false
 
 [[window_rule]]
 blur = false
-]==], BASE_CONFIG_PATH)
+]==])
+    end
+
+    if opts.shadows ~= false then
+        table.insert(parts, [==[
+[appearance.shadow]
+enabled = false
+]==])
+    end
+
+    if #parts == 1 then
+        return
+    end
+
+    local toml = table.concat(parts, "\n\n") .. "\n"
 
     -- Write temp override securely and hot-replace config in Umbriel only if base config exists and write succeeds
     local cmd = string.format([==[sh -c 'mkdir -p -m 0700 "%s" && if [ -f "%s" ]; then

@@ -8,17 +8,27 @@ High-performance gaming, rendering, and immersion profile suite for Noctalia. Dy
 | --- | --- |
 | ID | `detluck/performance-plus` |
 | Entries | Bar widget: `indicator`; shortcut: `shortcut`; service: `service` |
+| Dependencies | Declared conditional on active compositor and enabled features (see [Requirements](#requirements)) |
 
 ## Requirements
 
-No external daemons required. Visual effect toggling integrates with your active Wayland compositor:
+No external daemons are required. External commands declared in `plugin.toml` are conditional on your active Wayland compositor or optional features:
 
-- **Hyprland**: `hyprctl` (supports both modern Hyprland Lua setups and legacy configurations).
+### Compositor Utilities (Conditional)
+Only the utility corresponding to your active compositor is required:
+- **Hyprland**: `hyprctl` on `PATH` (supports both modern Hyprland Lua setups and legacy configurations).
 - **Niri**: `niri` on `PATH`.
 - **Mango**: `mmsg` on `PATH`.
 - **Sway / SwayFX**: `swaymsg` on `PATH`.
 - **KWin**: `qdbus6`, `qdbus`, or `busctl` on `PATH`.
 - **Umbriel**: `umbriel` on `PATH`.
+
+### System Utilities (Optional)
+- **Power Profile Management**: `powerprofilesctl` on `PATH` (when `set_power_profile` is enabled).
+- **Media Control**: `playerctl` on `PATH` (when `pause_media` is enabled).
+
+> [!NOTE]
+> The plugin manifest declares these commands for catalog disclosure; Noctalia does not block enabling the plugin if a tool for an inactive compositor or unused feature is not installed.
 
 ## Usage
 
@@ -60,6 +70,7 @@ Configure individual features in **Settings → Plugins → Performance Plus**:
 | `disable_wallpaper` | `bool` | `true` | Tear down background layer-shell surfaces to free GPU VRAM memory. |
 | `disable_blur` | `bool` | `true` | Turn off compositor background blur. |
 | `disable_animations` | `bool` | `true` | Turn off window and shell transition animations. |
+| `disable_shadows` | `bool` | `true` | Turn off window drop shadows. |
 | `hide_widgets` | `bool` | `true` | Pause and hide all active desktop widgets. |
 | `enable_dnd` | `bool` | `true` | Silence all notification toasts while active. |
 | `clear_notifications` | `bool` | `true` | Clear any currently visible notification toasts immediately upon activation. |

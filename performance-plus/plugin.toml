@@ -6,7 +6,19 @@ author = "detluck"
 license = "MIT"
 icon = "rocket"
 description = "High-performance gaming and rendering profile suite for Noctalia."
-dependencies = []
+# External dependencies (conditional on active compositor and enabled features)
+dependencies = [
+    "hyprctl",
+    "niri",
+    "mmsg",
+    "swaymsg",
+    "qdbus6",
+    "qdbus",
+    "busctl",
+    "umbriel",
+    "powerprofilesctl",
+    "playerctl",
+]
 tags = ["gaming", "system", "utility"]
 
 [[setting]]
@@ -34,7 +46,7 @@ default = true
 key = "disable_shadows"
 type = "bool"
 label_key = "settings.disable_shadows.label"
-description_key = "settings.disable_animations.description"
+description_key = "settings.disable_shadows.description"
 default = true
 
 [[setting]]

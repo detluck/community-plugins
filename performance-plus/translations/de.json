@@ -12,6 +12,10 @@
       "label": "Animationen deaktivieren",
       "description": "Fenster- und Shell-Übergangsanimationen ausschalten"
     },
+    "disable_shadows": {
+      "label": "Schatten deaktivieren",
+      "description": "Compositor-Fensterschatten ausschalten"
+    },
     "hide_widgets": {
       "label": "Desktop-Widgets ausblenden",
       "description": "Alle aktiven Desktop-Widgets pausieren und verbergen"

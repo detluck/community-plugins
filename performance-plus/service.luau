@@ -18,8 +18,8 @@ function onIpc(event, payload)
     end
 end
 
-function onExit(_signal, reason)
-    if (reason == "disable" or reason == "uninstall") and noctalia.state.get("performance") == true then
+function onExit(_signal, _reason)
+    if noctalia.state.get("performance") == true then
         noctalia.state.set("performance", false)
         core.toggle(false)
     end

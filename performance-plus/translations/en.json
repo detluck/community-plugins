@@ -14,7 +14,7 @@
     },
     "disable_shadows": {
       "label": "Disable Shadows",
-      "description": "Turn off compositor Shadows"
+      "description": "Turn off compositor shadows"
     },
     "hide_widgets": {
       "label": "Hide Desktop Widgets",
