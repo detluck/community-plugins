@@ -4,7 +4,10 @@ local home = noctalia.getenv("HOME") or ""
 local xdgConfig = noctalia.getenv("XDG_CONFIG_HOME")
 local configDir = (xdgConfig and xdgConfig ~= "") and xdgConfig or (home .. "/.config")
 
-local PERF_CONFIG_PATH = "/tmp/noctalia-mango-perf.conf"
+local xdgRuntime = noctalia.getenv("XDG_RUNTIME_DIR")
+local runtimeDir = (xdgRuntime and xdgRuntime ~= "") and (xdgRuntime .. "/noctalia-performance-plus") or (home .. "/.cache/noctalia-performance-plus")
+
+local PERF_CONFIG_PATH = runtimeDir .. "/mango-perf.conf"
 local BASE_CONFIG_PATH = configDir .. "/mango/config.conf"
 
 function M.enable(opts)
@@ -33,11 +36,15 @@ function M.enable(opts)
 
     local content = table.concat(lines, "\n") .. "\n"
 
-    -- Write temp override and hot-load it in Mango via mmsg dispatch load_config_file
-    local cmd = string.format(
-        "sh -c 'if [ -f \"%s\" ]; then cat << \"EOF\" > %s\n%sEOF\nmmsg dispatch load_config_file,%s; fi'",
-        BASE_CONFIG_PATH, PERF_CONFIG_PATH, content, PERF_CONFIG_PATH
-    )
+    -- Write temp override securely and hot-load it in Mango only if base config exists and write succeeds
+    local cmd = string.format([[sh -c 'mkdir -p -m 0700 "%s" && if [ -f "%s" ]; then
+    rm -f "%s"
+    if cat << "EOF" > "%s"
+%sEOF
+    then
+        mmsg dispatch load_config_file,%s
+    fi
+fi']], runtimeDir, BASE_CONFIG_PATH, PERF_CONFIG_PATH, PERF_CONFIG_PATH, content, PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Mango] Performance mode enabled (effects disabled via load_config_file)")
@@ -45,7 +52,7 @@ end
 
 function M.disable(opts)
     -- Reset to default config and clean up temp file
-    local cmd = string.format("sh -c 'mmsg dispatch load_config_file,; mmsg dispatch reload_config 2>/dev/null; rm -f %s'", PERF_CONFIG_PATH)
+    local cmd = string.format("sh -c 'mmsg dispatch load_config_file,; mmsg dispatch reload_config 2>/dev/null; rm -f \"%s\"'", PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Mango] Performance mode disabled (restored default config)")

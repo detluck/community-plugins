@@ -4,7 +4,10 @@ local home = noctalia.getenv("HOME") or ""
 local xdgConfig = noctalia.getenv("XDG_CONFIG_HOME")
 local configDir = (xdgConfig and xdgConfig ~= "") and xdgConfig or (home .. "/.config")
 
-local PERF_CONFIG_PATH = "/tmp/noctalia-niri-perf.kdl"
+local xdgRuntime = noctalia.getenv("XDG_RUNTIME_DIR")
+local runtimeDir = (xdgRuntime and xdgRuntime ~= "") and (xdgRuntime .. "/noctalia-performance-plus") or (home .. "/.cache/noctalia-performance-plus")
+
+local PERF_CONFIG_PATH = runtimeDir .. "/niri-perf.kdl"
 local BASE_CONFIG_PATH = configDir .. "/niri/config.kdl"
 
 function M.enable(opts)
@@ -33,8 +36,16 @@ layer-rule {
 }
 ]], BASE_CONFIG_PATH)
 
-    -- Write temp override and load it in Niri only if base config exists
-    local cmd = string.format("sh -c 'if [ -f \"%s\" ]; then cat << \"EOF\" > %s\n%s\nEOF\nniri msg action load-config-file --path %s; fi'", BASE_CONFIG_PATH, PERF_CONFIG_PATH, kdl, PERF_CONFIG_PATH)
+    -- Write temp override securely and load it in Niri only if base config exists and write succeeds
+    local cmd = string.format([[sh -c 'mkdir -p -m 0700 "%s" && if [ -f "%s" ]; then
+    rm -f "%s"
+    if cat << "EOF" > "%s"
+%s
+EOF
+    then
+        niri msg action load-config-file --path "%s"
+    fi
+fi']], runtimeDir, BASE_CONFIG_PATH, PERF_CONFIG_PATH, PERF_CONFIG_PATH, kdl, PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Niri] Performance mode enabled (animations & background-effects disabled)")
@@ -42,7 +53,7 @@ end
 
 function M.disable(opts)
     -- Reload base config in Niri and cleanup temp override
-    local cmd = string.format("sh -c 'niri msg action load-config-file; rm -f %s'", PERF_CONFIG_PATH)
+    local cmd = string.format("sh -c 'niri msg action load-config-file; rm -f \"%s\"'", PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Niri] Performance mode disabled (restored base config)")

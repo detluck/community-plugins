@@ -4,7 +4,10 @@ local home = noctalia.getenv("HOME") or ""
 local xdgConfig = noctalia.getenv("XDG_CONFIG_HOME")
 local configDir = (xdgConfig and xdgConfig ~= "") and xdgConfig or (home .. "/.config")
 
-local PERF_CONFIG_PATH = "/tmp/noctalia-umbriel-perf.toml"
+local xdgRuntime = noctalia.getenv("XDG_RUNTIME_DIR")
+local runtimeDir = (xdgRuntime and xdgRuntime ~= "") and (xdgRuntime .. "/noctalia-performance-plus") or (home .. "/.cache/noctalia-performance-plus")
+
+local PERF_CONFIG_PATH = runtimeDir .. "/umbriel-perf.toml"
 local BASE_CONFIG_PATH = configDir .. "/umbriel/config.toml"
 
 function M.enable(opts)
@@ -12,7 +15,7 @@ function M.enable(opts)
         noctalia.runAsync({"umbriel", "msg", "effect-screen-set:off"})
     end
 
-    local toml = string.format([[
+    local toml = string.format([==[
 [include]
 files = ["%s"]
 
@@ -25,10 +28,18 @@ blur = false
 
 [[window_rule]]
 blur = false
-]], BASE_CONFIG_PATH)
+]==], BASE_CONFIG_PATH)
 
-    -- Write temp override and hot-replace config in Umbriel only if base config exists
-    local cmd = string.format("sh -c 'if [ -f \"%s\" ]; then cat << \"EOF\" > %s\n%s\nEOF\numbriel config-replace %s; fi'", BASE_CONFIG_PATH, PERF_CONFIG_PATH, toml, PERF_CONFIG_PATH)
+    -- Write temp override securely and hot-replace config in Umbriel only if base config exists and write succeeds
+    local cmd = string.format([==[sh -c 'mkdir -p -m 0700 "%s" && if [ -f "%s" ]; then
+    rm -f "%s"
+    if cat << "EOF" > "%s"
+%s
+EOF
+    then
+        umbriel config-replace "%s"
+    fi
+fi']==], runtimeDir, BASE_CONFIG_PATH, PERF_CONFIG_PATH, PERF_CONFIG_PATH, toml, PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Umbriel] Performance mode enabled (blur & screen effects disabled)")
@@ -39,7 +50,7 @@ function M.disable(opts)
         noctalia.runAsync({"umbriel", "msg", "effect-screen-set:reset"})
     end
 
-    local cmd = string.format("sh -c 'if [ -f \"%s\" ]; then umbriel config-replace %s; fi; rm -f %s'", BASE_CONFIG_PATH, BASE_CONFIG_PATH, PERF_CONFIG_PATH)
+    local cmd = string.format("sh -c 'if [ -f \"%s\" ]; then umbriel config-replace \"%s\"; fi; rm -f \"%s\"'", BASE_CONFIG_PATH, BASE_CONFIG_PATH, PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Umbriel] Performance mode disabled (restored base config)")
