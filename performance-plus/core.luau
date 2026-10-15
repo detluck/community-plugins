@@ -129,6 +129,7 @@ function M.toggle(perfMode)
   local opts = {
     blur = getSetting("disable_blur"),
     animations = getSetting("disable_animations"),
+    shadows = getSetting("disable_shadows"),
   }
 
   if perfMode then

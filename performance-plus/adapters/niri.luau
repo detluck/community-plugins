@@ -8,7 +8,7 @@ local PERF_CONFIG_PATH = "/tmp/noctalia-niri-perf.kdl"
 local BASE_CONFIG_PATH = configDir .. "/niri/config.kdl"
 
 function M.enable(opts)
-    if opts.animations == false and opts.blur == false then
+    if opts.animations == false and opts.blur == false and opts.shadows == false then
         return
     end
 

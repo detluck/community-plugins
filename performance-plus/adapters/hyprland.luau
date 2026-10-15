@@ -39,16 +39,18 @@ fi
 end
 
 function M.enable(opts)
-    local disableBlur = opts.blur ~= false
-    local disableAnim = opts.animations ~= false
+    local disableBlur = (opts.blur == true) and false or nil
+    local disableAnim = (opts.animations == true) and false or nil
+    local disableShadows = (opts.shadows == true) and false or nil
 
-    apply(not disableBlur, not disableAnim, false)
+    apply(disableBlur, disableAnim, disableShadows)
     noctalia.log("[Hyprland] Performance mode enabled (blur & animations disabled)")
 end
 
 function M.disable(opts)
-    local restoreBlur = opts.blur ~= false
-    local restoreAnim = opts.animations ~= false
+    local restoreBlur = (opts.blur == true) and true or nil
+    local restoreAnim = (opts.animations == true) and true or nil
+    local restoreShadows = (opts.shadows == true) and true or nil
 
     apply(restoreBlur, restoreAnim, true)
     noctalia.log("[Hyprland] Performance mode disabled (blur & animations restored)")

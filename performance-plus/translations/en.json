@@ -12,6 +12,10 @@
       "label": "Disable Animations",
       "description": "Turn off window and shell transition animations"
     },
+    "disable_shadows": {
+      "label": "Disable Shadows",
+      "description": "Turn off compositor Shadows"
+    },
     "hide_widgets": {
       "label": "Hide Desktop Widgets",
       "description": "Pause and hide all active desktop widgets"

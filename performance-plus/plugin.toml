@@ -31,6 +31,13 @@ description_key = "settings.disable_animations.description"
 default = true
 
 [[setting]]
+key = "disable_shadows"
+type = "bool"
+label_key = "settings.disable_shadows.label"
+description_key = "settings.disable_animations.description"
+default = true
+
+[[setting]]
 key = "hide_widgets"
 type = "bool"
 label_key = "settings.hide_widgets.label"

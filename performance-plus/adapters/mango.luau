@@ -26,8 +26,10 @@ function M.enable(opts)
         table.insert(lines, "layer_animations=0")
     end
 
-    table.insert(lines, "shadows=0")
-    table.insert(lines, "layer_shadows=0")
+    if opts.shadows ~= false then
+      table.insert(lines, "shadows=0")
+      table.insert(lines, "layer_shadows=0")
+    end
 
     local content = table.concat(lines, "\n") .. "\n"
 
