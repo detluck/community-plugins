@@ -99,6 +99,7 @@ noctalia msg plugin "detluck/performance-plus:service" all disable
 
 ## Notes
 
+- **Rapid Toggles**: Disabling cancels pending activation. A cancelled activation's callback cannot cancel a newer activation.
 - **Compositor Adaptation**:
   - **Hyprland**: Evaluates `hl.config()` via `hyprctl eval` (with fallback to `hyprctl keyword`) to safely disable blur, shadows, and animations without breaking Lua configuration parsers.
   - **Niri**: Generates an overlay configuration and hot-loads it via `niri msg action load-config-file`. Base config is restored upon exit.

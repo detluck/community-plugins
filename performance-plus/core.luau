@@ -154,7 +154,10 @@ echo "{\"dnd\":\"$dnd\",\"power\":\"$power\",\"status\":$status}"
 ']]
 
     noctalia.runAsync(queryCmd, function(result)
-      if currentEpoch ~= activationEpoch or not isActivating or noctalia.state.get("performance") ~= true then
+      if currentEpoch ~= activationEpoch then
+        return
+      end
+      if not isActivating or noctalia.state.get("performance") ~= true then
         isActivating = false
         return
       end
