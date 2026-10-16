@@ -90,7 +90,7 @@ echo "$loaded"
 ]], table.concat(targetEffects, " "))
 
     noctalia.runAsync(queryScript, function(result)
-        if noctalia.state.get("performance") ~= true then
+        if noctalia.state.get("performance") ~= true or noctalia.state.get("kwin_snapshot") ~= nil then
             return
         end
 
@@ -112,7 +112,11 @@ end
 
 function M.disable(opts)
     local activeLoaded = noctalia.state.get("kwin_snapshot")
-    if activeLoaded and #activeLoaded > 0 then
+    if activeLoaded == nil then
+        return
+    end
+
+    if #activeLoaded > 0 then
         runKwinEffects("loadEffect", activeLoaded)
     end
     noctalia.state.set("kwin_snapshot", nil)

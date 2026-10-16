@@ -43,9 +43,16 @@ function M.enable(opts)
         return
     end
 
+    if noctalia.state.get("hyprland_snapshot") ~= nil then
+        return
+    end
+
     local probeCmd = [[sh -c 'echo "{\"blur\":$(hyprctl -j getoption decoration:blur:enabled 2>/dev/null | grep -o "\"bool\": *[a-z]*" | cut -d: -f2),\"anim\":$(hyprctl -j getoption animations:enabled 2>/dev/null | grep -o "\"bool\": *[a-z]*" | cut -d: -f2),\"shadow\":$(hyprctl -j getoption decoration:shadow:enabled 2>/dev/null | grep -o "\"bool\": *[a-z]*" | cut -d: -f2)}"' ]]
     noctalia.runAsync(probeCmd, function(result)
         if noctalia.state.get("performance") ~= true then
+            return
+        end
+        if noctalia.state.get("hyprland_snapshot") ~= nil then
             return
         end
 
@@ -71,9 +78,13 @@ end
 
 function M.disable(opts)
     local snap = noctalia.state.get("hyprland_snapshot")
-    local restoreBlur = if opts.blur == true then ((snap and snap.blur ~= nil) and snap.blur or true) else nil
-    local restoreAnim = if opts.animations == true then ((snap and snap.anim ~= nil) and snap.anim or true) else nil
-    local restoreShadow = if opts.shadows == true then ((snap and snap.shadow ~= nil) and snap.shadow or true) else nil
+    if not snap then
+        return
+    end
+
+    local restoreBlur = if opts.blur == true then (if snap.blur ~= nil then snap.blur else true) else nil
+    local restoreAnim = if opts.animations == true then (if snap.anim ~= nil then snap.anim else true) else nil
+    local restoreShadow = if opts.shadows == true then (if snap.shadow ~= nil then snap.shadow else true) else nil
 
     apply(restoreBlur, restoreAnim, restoreShadow)
     noctalia.state.set("hyprland_snapshot", nil)

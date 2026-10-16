@@ -51,8 +51,8 @@ fi']], runtimeDir, BASE_CONFIG_PATH, PERF_CONFIG_PATH, PERF_CONFIG_PATH, content
 end
 
 function M.disable(opts)
-    -- Reset to default config and clean up temp file
-    local cmd = string.format("sh -c 'mmsg dispatch load_config_file,; mmsg dispatch reload_config 2>/dev/null; rm -f \"%s\"'", PERF_CONFIG_PATH)
+    -- Reset to default config and clean up temp file only if override exists
+    local cmd = string.format("sh -c 'if [ -f \"%s\" ]; then mmsg dispatch load_config_file,; mmsg dispatch reload_config 2>/dev/null; rm -f \"%s\"; fi'", PERF_CONFIG_PATH, PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Mango] Performance mode disabled (restored default config)")

@@ -71,8 +71,8 @@ fi']], runtimeDir, BASE_CONFIG_PATH, PERF_CONFIG_PATH, PERF_CONFIG_PATH, kdl, PE
 end
 
 function M.disable(opts)
-    -- Reload base config in Niri and cleanup temp override
-    local cmd = string.format("sh -c 'niri msg action load-config-file; rm -f \"%s\"'", PERF_CONFIG_PATH)
+    -- Reload base config in Niri and cleanup temp override only if override exists
+    local cmd = string.format("sh -c 'if [ -f \"%s\" ]; then niri msg action load-config-file; rm -f \"%s\"; fi'", PERF_CONFIG_PATH, PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Niri] Performance mode disabled (restored base config)")

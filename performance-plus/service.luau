@@ -8,13 +8,23 @@ function onIpc(event, payload)
         core.toggle(newMode)
         noctalia.log(string.format("[Service] IPC toggled Performance Plus: %s", tostring(newMode)))
     elseif event == "enable" then
-        noctalia.state.set("performance", true)
-        core.toggle(true)
-        noctalia.log("[Service] IPC enabled Performance Plus")
+        local current = noctalia.state.get("performance") == true
+        if not current then
+            noctalia.state.set("performance", true)
+            core.toggle(true)
+            noctalia.log("[Service] IPC enabled Performance Plus")
+        else
+            noctalia.log("[Service] IPC enable ignored: already active")
+        end
     elseif event == "disable" then
-        noctalia.state.set("performance", false)
-        core.toggle(false)
-        noctalia.log("[Service] IPC disabled Performance Plus")
+        local current = noctalia.state.get("performance") == true
+        if current then
+            noctalia.state.set("performance", false)
+            core.toggle(false)
+            noctalia.log("[Service] IPC disabled Performance Plus")
+        else
+            noctalia.log("[Service] IPC disable ignored: already inactive")
+        end
     end
 end
 

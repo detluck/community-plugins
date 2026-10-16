@@ -70,7 +70,7 @@ function M.disable(opts)
         noctalia.runAsync({"umbriel", "msg", "effect-screen-set:reset"})
     end
 
-    local cmd = string.format("sh -c 'if [ -f \"%s\" ]; then umbriel config-replace \"%s\"; fi; rm -f \"%s\"'", BASE_CONFIG_PATH, BASE_CONFIG_PATH, PERF_CONFIG_PATH)
+    local cmd = string.format("sh -c 'if [ -f \"%s\" ]; then if [ -f \"%s\" ]; then umbriel config-replace \"%s\"; fi; rm -f \"%s\"; fi'", PERF_CONFIG_PATH, BASE_CONFIG_PATH, BASE_CONFIG_PATH, PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Umbriel] Performance mode disabled (restored base config)")

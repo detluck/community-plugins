@@ -29,13 +29,28 @@ end
 local function getSnapshotFile()
   local dataDir = noctalia.pluginDataDir and noctalia.pluginDataDir()
   if dataDir and dataDir ~= "" then
+    if noctalia.mkdirAll then
+      pcall(noctalia.mkdirAll, dataDir)
+    end
     return dataDir .. "/snapshot.json"
   end
   local home = noctalia.getenv("HOME") or ""
-  return home .. "/.cache/noctalia-performance-plus/snapshot.json"
+  local cacheDir = home .. "/.cache/noctalia-performance-plus"
+  if noctalia.mkdirAll then
+    pcall(noctalia.mkdirAll, cacheDir)
+  end
+  return cacheDir .. "/snapshot.json"
 end
 
+local isActive = false
+local isActivating = false
+local activationEpoch = 0
+
 local function saveSnapshot(snapshot)
+  -- Retain original snapshot until active-to-inactive transition
+  if noctalia.state.get("snapshot") ~= nil then
+    return
+  end
   noctalia.state.set("snapshot", snapshot)
   local path = getSnapshotFile()
   if path then
@@ -54,6 +69,7 @@ local function loadSnapshot()
     if content and content ~= "" then
       local decoded = noctalia.json.decode(content)
       if decoded then
+        noctalia.state.set("snapshot", decoded)
         return decoded
       end
     end
@@ -119,6 +135,17 @@ end
 
 function M.toggle(perfMode)
   if perfMode then
+    -- Idempotency check: if already active or currently activating, no-op
+    if isActive or isActivating or loadSnapshot() ~= nil then
+      noctalia.state.set("performance", true)
+      return
+    end
+
+    isActivating = true
+    activationEpoch = activationEpoch + 1
+    local currentEpoch = activationEpoch
+    noctalia.state.set("performance", true)
+
     local queryCmd = [[sh -c '
 dnd=$(noctalia msg notification-dnd-status 2>/dev/null | tr -d "\r\n")
 power=$(powerprofilesctl get 2>/dev/null | tr -d "\r\n")
@@ -127,24 +154,29 @@ echo "{\"dnd\":\"$dnd\",\"power\":\"$power\",\"status\":$status}"
 ']]
 
     noctalia.runAsync(queryCmd, function(result)
-      if noctalia.state.get("performance") ~= true then
+      if currentEpoch ~= activationEpoch or not isActivating or noctalia.state.get("performance") ~= true then
+        isActivating = false
         return
       end
+      isActivating = false
+      isActive = true
 
-      local data = nil
-      if result and result.stdout and result.stdout ~= "" then
-        data = noctalia.json.decode(result.stdout)
+      if loadSnapshot() == nil then
+        local data = nil
+        if result and result.stdout and result.stdout ~= "" then
+          data = noctalia.json.decode(result.stdout)
+        end
+
+        local snapshot = {
+          dnd = (data and (data.dnd == "on" or data.dnd == "true")),
+          power_profile = (data and data.power and data.power ~= "") and data.power or "balanced",
+          bar_visible = (data and data.status and data.status.barVisible == true),
+          desktop_widgets = noctalia.getSetting("desktop_widgets.enabled") ~= false,
+          osd = noctalia.getSetting("osd.enabled") ~= false,
+          dock = noctalia.getSetting("dock.enabled") ~= false,
+        }
+        saveSnapshot(snapshot)
       end
-
-      local snapshot = {
-        dnd = (data and data.dnd == "on"),
-        power_profile = (data and data.power and data.power ~= "") and data.power or "balanced",
-        bar_visible = (data and data.status and data.status.barVisible == true),
-        desktop_widgets = noctalia.getSetting("desktop_widgets.enabled") ~= false,
-        osd = noctalia.getSetting("osd.enabled") ~= false,
-        dock = noctalia.getSetting("dock.enabled") ~= false,
-      }
-      saveSnapshot(snapshot)
 
       -- 1. Wallpapers (release background textures & surfaces)
       if getSetting("disable_wallpaper") then
@@ -203,66 +235,80 @@ echo "{\"dnd\":\"$dnd\",\"power\":\"$power\",\"status\":$status}"
       adapter.enable(opts)
     end)
   else
+    activationEpoch = activationEpoch + 1
+    local wasActive = isActive or isActivating
+    isActive = false
+    isActivating = false
+    noctalia.state.set("performance", false)
+
     local snapshot = loadSnapshot()
-
-    -- 1. Wallpapers (restore background surfaces)
-    if getSetting("disable_wallpaper") then
-      setWallpapers(true)
+    -- Idempotency check: if inactive and no snapshot exists, do not apply fallbacks
+    if snapshot == nil and not wasActive then
+      return
     end
 
-    -- 2. Desktop Widgets (restore only if previously enabled)
-    if getSetting("hide_widgets") then
-      if snapshot == nil or snapshot.desktop_widgets then
-        setDesktopWidget(true)
+    if snapshot ~= nil then
+      -- 1. Wallpapers (restore background surfaces)
+      if getSetting("disable_wallpaper") then
+        setWallpapers(true)
       end
-    end
 
-    -- 3. Notifications Do Not Disturb (restore original state)
-    if getSetting("enable_dnd") then
-      local prevDnd = (snapshot and snapshot.dnd ~= nil) and snapshot.dnd or false
-      setDnd(prevDnd)
-    end
-
-    -- 5. Power Profile (restore recorded previous profile)
-    if getSetting("set_power_profile") then
-      local prevPower = (snapshot and snapshot.power_profile) or "balanced"
-      setPowerProfile(prevPower)
-    end
-
-    -- 6. Status Bar (restore only if previously visible)
-    if getSetting("hide_bar") then
-      if snapshot == nil or snapshot.bar_visible then
-        setBarVisibility(true)
+      -- 2. Desktop Widgets (restore only if previously enabled)
+      if getSetting("hide_widgets") then
+        if snapshot.desktop_widgets ~= false then
+          setDesktopWidget(true)
+        end
       end
-    end
 
-    -- 7. Dock (restore only if previously enabled)
-    if getSetting("hide_dock") then
-      if snapshot == nil or snapshot.dock then
-        setDockVisibility(true)
+      -- 3. Notifications Do Not Disturb (restore original state)
+      if getSetting("enable_dnd") then
+        local prevDnd = (snapshot.dnd == true)
+        setDnd(prevDnd)
       end
-    end
 
-    -- 8. OSD Popups (restore only if previously enabled)
-    if getSetting("disable_osd") then
-      if snapshot == nil or snapshot.osd then
-        setOsdEnabled(true)
+      -- 5. Power Profile (restore recorded previous profile)
+      if getSetting("set_power_profile") then
+        local prevPower = snapshot.power_profile or "balanced"
+        setPowerProfile(prevPower)
       end
+
+      -- 6. Status Bar (restore only if previously visible)
+      if getSetting("hide_bar") then
+        if snapshot.bar_visible == true then
+          setBarVisibility(true)
+        end
+      end
+
+      -- 7. Dock (restore only if previously enabled)
+      if getSetting("hide_dock") then
+        if snapshot.dock ~= false then
+          setDockVisibility(true)
+        end
+      end
+
+      -- 8. OSD Popups (restore only if previously enabled)
+      if getSetting("disable_osd") then
+        if snapshot.osd ~= false then
+          setOsdEnabled(true)
+        end
+      end
+
+      -- 10. Custom Shell Hooks
+      runHook(getSetting("hook_on_exit"))
+
+      -- 11. Compositor Visual Effects (Blur, Animations, Shadows)
+      local opts = {
+        blur = getSetting("disable_blur"),
+        animations = getSetting("disable_animations"),
+        shadows = getSetting("disable_shadows"),
+      }
+      adapter.disable(opts)
+
+      -- Cleanup recorded snapshot (retaining until active-to-inactive transition completes)
+      clearSnapshot()
+    else
+      clearSnapshot()
     end
-
-    -- 10. Custom Shell Hooks
-    runHook(getSetting("hook_on_exit"))
-
-    -- 11. Compositor Visual Effects (Blur, Animations, Shadows)
-    local opts = {
-      blur = getSetting("disable_blur"),
-      animations = getSetting("disable_animations"),
-      shadows = getSetting("disable_shadows"),
-    }
-    adapter.disable(opts)
-
-    -- Cleanup recorded snapshot
-    clearSnapshot()
   end
 end
 
