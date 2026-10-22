@@ -1,6 +1,6 @@
 id = "detluck/performance-plus"
 name = "Performance Plus"
-version = "0.2.1"
+version = "0.2.2"
 plugin_api = 31
 author = "detluck"
 license = "MIT"

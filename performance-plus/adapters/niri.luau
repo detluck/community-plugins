@@ -1,6 +1,10 @@
 local M = {}
 
 local function getBaseConfigPath()
+    local niriConfig = noctalia.getenv("NIRI_CONFIG")
+    if niriConfig and niriConfig ~= "" and noctalia.fileExists(niriConfig) then
+        return niriConfig
+    end
     local xdgConfig = noctalia.getenv("XDG_CONFIG_HOME")
     if xdgConfig and xdgConfig ~= "" then
         local p = xdgConfig .. "/niri/config.kdl"
@@ -85,8 +89,16 @@ EOF
 end
 
 function M.disable(opts)
+    local baseConfig = getBaseConfigPath()
+    local reloadCmd = ""
+    if noctalia.fileExists(baseConfig) then
+        reloadCmd = string.format('niri msg action load-config-file --path "%s"', baseConfig)
+    else
+        reloadCmd = "niri msg action load-config-file"
+    end
+
     -- Reload base config in Niri and cleanup temp override only if override exists
-    local cmd = string.format("sh -c 'if [ -f \"%s\" ]; then niri msg action load-config-file; rm -f \"%s\"; fi'", PERF_CONFIG_PATH, PERF_CONFIG_PATH)
+    local cmd = string.format('sh -c \'if [ -f "%s" ]; then %s; rm -f "%s"; fi\'', PERF_CONFIG_PATH, reloadCmd, PERF_CONFIG_PATH)
     noctalia.runAsync(cmd)
 
     noctalia.log("[Niri] Performance mode disabled (restored base config)")
